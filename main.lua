@@ -1,12 +1,12 @@
--- main.lua
-local json = require("dkjson")  -- مكتبة JSON
-local https = require("ssl.https") -- طلبات https
+local json = require("dkjson")
+local https = require("ssl.https")
 local ltn12 = require("ltn12")
 
 local token = "947886484:AAEh5j-gECZEN8BT45FDnPDgAQBEruA2FkE"
 local api_url = "https://api.telegram.org/bot"..token.."/"
 
--- دالة لإرسال رسالة
+local last_update_id = 0
+
 local function sendMessage(chat_id, text, reply_to_message_id)
   local url = api_url.."sendMessage"
   local data = {
@@ -18,7 +18,7 @@ local function sendMessage(chat_id, text, reply_to_message_id)
   local payload = json.encode(data)
   local response_body = {}
 
-  local res, code, response_headers = https.request{
+  local res, code = https.request{
     url = url,
     method = "POST",
     headers = {
@@ -28,10 +28,13 @@ local function sendMessage(chat_id, text, reply_to_message_id)
     source = ltn12.source.string(payload),
     sink = ltn12.sink.table(response_body)
   }
+
+  if code ~= 200 then
+    print("Error sending message, HTTP code:", code)
+  end
   return code == 200
 end
 
--- دالة لجلب التحديثات (الرسائل الجديدة)
 local function getUpdates(offset)
   local url = api_url.."getUpdates?timeout=60"
   if offset then
@@ -39,25 +42,25 @@ local function getUpdates(offset)
   end
 
   local response_body = {}
-  local res, code, response_headers = https.request{
+  local res, code = https.request{
     url = url,
     sink = ltn12.sink.table(response_body)
   }
 
   if code == 200 then
     local body = table.concat(response_body)
-    local data = json.decode(body)
+    local data, pos, err = json.decode(body, 1, nil)
     if data and data.ok then
       return data.result
+    else
+      print("Error decoding JSON:", err)
     end
+  else
+    print("Failed to get updates, HTTP code:", code)
   end
   return nil
 end
 
--- المتغير لتتبع آخر تحديث
-local last_update_id = 0
-
--- دالة لمعالجة الرسائل
 local function processMessage(msg)
   local chat_id = msg.chat.id
   local text = msg.text or ""
@@ -76,19 +79,27 @@ local function processMessage(msg)
     )
     sendMessage(chat_id, reply_text, msg.message_id)
   else
-    -- هنا تضع باقي أوامر البوت حسب ما سترسل لاحقاً
+    -- هنا تضيف باقي أوامر البوت
   end
 end
 
--- حلقة استقبال التحديثات
 while true do
-  local updates = getUpdates(last_update_id + 1)
-  if updates then
-    for _, update in ipairs(updates) do
-      last_update_id = update.update_id
-      if update.message then
-        processMessage(update.message)
+  local success, err = pcall(function()
+    local updates = getUpdates(last_update_id + 1)
+    if updates then
+      for _, update in ipairs(updates) do
+        last_update_id = update.update_id
+        if update.message then
+          processMessage(update.message)
+        end
       end
     end
+  end)
+  
+  if not success then
+    print("Error in main loop:", err)
   end
+  
+  -- تأخير 1 ثانية قبل الدورة التالية لتقليل الضغط
+  os.execute("sleep 1")
 end
