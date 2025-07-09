@@ -1,0 +1,26 @@
+{
+  "groups": {
+    "-1001234567890": {
+      "title": "مجموعة التجريب",
+      "welcome": "أهلاً وسهلاً بيك 🌟",
+      "rules": "1. احترام الآخرين\n2. ممنوع السب",
+      "lock_settings": {
+        "links": "kick",
+        "photos": "mute",
+        "forwards": "ban"
+      },
+      "enabled_features": {
+        "welcome": true,
+        "lock_system": true,
+        "bank": false,
+        "fun": true,
+        "games": true
+      }
+    }
+  },
+  "bot_settings": {
+    "auto_backup": true,
+    "global_ban_list": [123456789, 987654321],
+    "developer_ids": [674291793]
+  }
+}
