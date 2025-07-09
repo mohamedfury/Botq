@@ -1,0 +1,29 @@
+# ملفات Lua المؤقتة
+*.luac
+
+# ملفات بيانات المستخدمين (تحديث مستمر)
+data/users.json
+data/settings.json
+data/blacklist.json
+
+# ملفات التكوين (توكن البوت والمطورين)
+config.lua
+
+# ملفات النظام المؤقتة
+*.swp
+*.bak
+*.tmp
+
+# مجلدات نظامية
+__pycache__/
+node_modules/
+.DS_Store
+Thumbs.db
+
+# ملفات النسخ الاحتياطي
+*.zip
+*.tar.gz
+
+# سجل التشغيل
+logs/
+*.log
